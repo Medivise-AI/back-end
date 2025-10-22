@@ -1,6 +1,6 @@
-import { error } from 'console';
 import pool from '../config/db.js';
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 
 
 export const registerDoctor = async (req, res) => {
@@ -21,9 +21,9 @@ export const registerDoctor = async (req, res) => {
 export const loginDoctor = async (req, res) => {
     const { email, password } = req.body;
     try {
-        const result = pool.query(
-            'SELECT * FROM doctors WHERE email=$1', [email]
-        );
+    
+            const result = await pool.query("SELECT * FROM doctors WHERE email = $1", [email]);
+
         if (result.rows.length === 0) return res.status(404).json({ error: "Doctor not found" });
 
         const doctor = result.rows[0];
@@ -31,11 +31,41 @@ export const loginDoctor = async (req, res) => {
 
         if (!isMatch) return res.status(400).json({ error: "Invalid Password" });
 
-        const token = jwt.sign({ id: doctor.id }, process.env.JWT_SECRET, { expiresIn: 'id' });
+        const token = jwt.sign({ id: doctor.id }, process.env.JWT_SECRET, { expiresIn: '1d' });
         res.json({ token, doctor: { id: doctor.id, name: doctor.name, email: doctor.email } });
     } catch (err) {
-        res.status(500).json({error: err.message})
+        res.status(500).json({ error: err.message })
     }
   
     
-}
+};
+
+export const getDoctors = async (req, res) => {
+    try {
+        const result = await pool.query(
+            'SELECT id, name, email FROM doctors'
+        );
+        res.json(result.rows);
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Internal server error" });
+
+    }
+};
+
+export const getDoctorById = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const result = await pool.query("SELECT id, name, email FROM doctors WHERE id = $1"
+            , [id]
+        );
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: "Doctor not found"})
+        }
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Internal server error" });
+    }
+};

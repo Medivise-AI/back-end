@@ -1,32 +1,49 @@
 import pool from '../config/db.js';
+import { analyzePDF, extractPDFText } from "../utils/ai.js"; 
 import fs from 'fs';
 
 
-// هنا ممكن تضيف أي AI integration لاحقًا
-// حالياً نكتفي بحفظ الملف ومساره في قاعدة البيانات
-
 
 export const addAnalysis = async (req, res) => {
+  try {
     const { type, notes } = req.body;
-    const patient_id = req.params.patient_id;
-    const doctor_id = req.doctor.id;
+    const patient_id = req.params.patientId;
 
-    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+    if (!req.file) return res.status(400).json({ error: "No file uploaded" });
 
     const file_path = req.file.path;
 
-    try {
-        const result = await pool.query(
-            `INSERT INTO analyses (patient_id, type, file_path, notes)
-             VALUES ($1, $2, $3, $4) RETURNING *`,
-            [patient_id, type, file_path, notes]
-        );
-        res.status(201).json({ analysis: result.rows[0] });
+    let ai_summary = "";
+    let text_data = "";
 
-    } catch (err) {
-        res.status(500).json({ error: err.message });
+    try {
+
+      text_data = await extractPDFText(file_path);
+
+      ai_summary = await analyzePDF(file_path);
+    } catch (aiErr) {
+      console.error("AI analysis failed:", aiErr);
+      ai_summary = "AI analysis failed or unavailable";
     }
+
+    const result = await pool.query(
+      `INSERT INTO analyses (patient_id, type, file_path, text_data, ai_summary, notes, date)
+       VALUES ($1,$2,$3,$4,$5,$6,CURRENT_DATE) RETURNING *`,
+      [patient_id, type, file_path, text_data, ai_summary, notes]
+    );
+
+    res.json({
+      message: "Analysis uploaded successfully",
+      analysis: result.rows[0],
+    });
+  } catch (err) {
+    console.error("Error in addAnalysis:", err);
+    res.status(500).json({ error: err.message });
+  }
 };
+
+
+
 
 export const getAnalyses = async (req, res) => {
   const patient_id = req.params.patientId;
