@@ -1,6 +1,11 @@
 import express from "express";
 import multer from "multer";
-import { addAnalysis, getAnalyses } from "../controllers/analysisController.js";
+import {
+  addAnalysis,
+  getAnalyses,
+  getAllAnalyses,
+  deleteAnalysis,
+} from "../controllers/analysisController.js";
 import { authMiddleware } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -19,5 +24,6 @@ const upload = multer({ storage: storage });
 
 router.post("/:patientId", authMiddleware, upload.single("file"), addAnalysis);
 router.get("/:patientId", authMiddleware, getAnalyses);
-
+router.get("/", authMiddleware, getAllAnalyses);
+router.delete("/:id", authMiddleware, deleteAnalysis);
 export default router;

@@ -40,6 +40,10 @@ export const loginDoctor = async (req, res) => {
     
 };
 
+
+
+
+
 export const getDoctors = async (req, res) => {
     try {
         const result = await pool.query(
