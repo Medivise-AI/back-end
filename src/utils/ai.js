@@ -22,7 +22,7 @@ export async function extractPDFText(filePath) {
   return pdfData.text || "";
 }
 
-export async function analyzePDF(filePath) {
+export async function analyzePDF(filePath, patientHistory) {
   try {
 
     const dataBuffer = fs.readFileSync(filePath);
@@ -45,7 +45,19 @@ export async function analyzePDF(filePath) {
           role: "user",
           parts: [
             {
-              text: `Summarize the key medical results and findings of this analysis in 3-4 sentences:\n${textData}`,
+              text: `
+You are a medical analysis assistant.
+Consider the patient's medical history below when interpreting the lab results.
+
+Patient history:
+${patientHistory}
+
+Lab results:
+${textData}
+
+Summarize the key findings in 3-4 sentences, highlighting any abnormalities or results that may relate to the patient's medical history.
+If possible, suggest potential next medical steps or tests.
+`,
             },
           ],
         },

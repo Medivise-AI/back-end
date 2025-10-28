@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 import doctorRoutes from "./src/routes/doctorRoutes.js";
 import patientRoutes from "./src/routes/patientRoutes.js";
 import analysisRoutes from "./src/routes/analysisRoutes.js";
-import pool from "./src/config/db.js";
+
 
 
 dotenv.config();
